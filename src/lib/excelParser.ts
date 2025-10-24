@@ -99,6 +99,12 @@ export const calculateKPIs = (data: WeeklyData[]) => {
   const latestWeek = data[data.length - 1];
   const previousWeek = data.length > 1 ? data[data.length - 2] : latestWeek;
   
+  console.log('Latest week data:', latestWeek);
+  console.log('KPI Calculations:', {
+    peakDemand: latestWeek.maxGhanaDemand,
+    totalGeneration: latestWeek.totalEnergyGenerated,
+  });
+  
   const avgFrequencyWithinRange = data.reduce((sum, d) => sum + d.frequencyWithinRange, 0) / data.length;
   const avgSystemAvailability = data.reduce((sum, d) => 
     sum + (d.availability69KV + d.availability161KV + d.availability225KV + d.availability330KV) / 4, 0
