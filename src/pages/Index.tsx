@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { DashboardHeader } from "@/components/DashboardHeader";
 import { OverviewTab } from "@/components/tabs/OverviewTab";
+import { RecentWeekTab } from "@/components/tabs/RecentWeekTab";
 import { GenerationTab } from "@/components/tabs/GenerationTab";
 import { TransmissionTab } from "@/components/tabs/TransmissionTab";
 import { FrequencyTab } from "@/components/tabs/FrequencyTab";
@@ -119,8 +120,9 @@ const Index = () => {
 
       <main className="max-w-7xl mx-auto px-8 py-8">
         <Tabs defaultValue="overview" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-5 gap-2">
+          <TabsList className="grid w-full grid-cols-3 lg:grid-cols-6 gap-2">
             <TabsTrigger value="overview">Overview</TabsTrigger>
+            <TabsTrigger value="recent">Recent Week</TabsTrigger>
             <TabsTrigger value="generation">Generation</TabsTrigger>
             <TabsTrigger value="transmission">Transmission</TabsTrigger>
             <TabsTrigger value="frequency">Frequency</TabsTrigger>
@@ -129,6 +131,10 @@ const Index = () => {
 
           <TabsContent value="overview" className="space-y-4">
             <OverviewTab kpis={kpis} />
+          </TabsContent>
+
+          <TabsContent value="recent" className="space-y-4">
+            <RecentWeekTab latestWeek={data[data.length - 1] || null} />
           </TabsContent>
 
           <TabsContent value="generation" className="space-y-4">
