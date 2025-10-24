@@ -47,6 +47,15 @@ export const parseExcelFile = async (file: File): Promise<WeeklyData[]> => {
         const headers = jsonData[headerRowIndex] as string[];
         const dataRows = jsonData.slice(headerRowIndex + 1) as any[][];
         
+        console.log('Headers found:', headers);
+        console.log('First data row:', dataRows[0]);
+        console.log('Sample parsed values:', {
+          month: dataRows[0]?.[0],
+          date: dataRows[0]?.[1],
+          totalEnergyGenerated: dataRows[0]?.[2],
+          maxGhanaDemand: dataRows[0]?.[3],
+        });
+        
         const parsedData: WeeklyData[] = dataRows
           .filter(row => row && row.length > 0 && row[1]) // Filter out empty rows
           .map(row => ({
