@@ -57,7 +57,7 @@ export const parseExcelFile = async (file: File): Promise<WeeklyData[]> => {
         });
         
         const parsedData: WeeklyData[] = dataRows
-          .filter(row => row && row.length > 0 && row[1]) // Filter out empty rows
+          .filter(row => row && row.length > 0 && row[1] && (parseFloat(row[2]) > 0 || parseFloat(row[3]) > 0)) // Filter out empty rows and rows with no data
           .map(row => ({
             month: String(row[0] || ''),
             date: String(row[1] || ''),
