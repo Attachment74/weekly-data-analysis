@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { useNavigate } from "react-router-dom";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { DashboardHeader } from "@/components/DashboardHeader";
 import { OverviewTab } from "@/components/tabs/OverviewTab";
@@ -9,16 +10,45 @@ import { FrequencyTab } from "@/components/tabs/FrequencyTab";
 import { RegionalTab } from "@/components/tabs/RegionalTab";
 import { parseExcelFile, calculateKPIs, WeeklyData } from "@/lib/excelParser";
 import { useToast } from "@/hooks/use-toast";
+import { useAdmin } from "@/hooks/useAdmin";
+import { supabase } from "@/integrations/supabase/client";
+import { User } from "@supabase/supabase-js";
 import { Loader2 } from "lucide-react";
 
 const Index = () => {
   const [data, setData] = useState<WeeklyData[]>([]);
   const [loading, setLoading] = useState(true);
   const [lastUpdated, setLastUpdated] = useState("");
+  const [user, setUser] = useState<User | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
+  const { isAdmin, loading: adminLoading } = useAdmin(user);
+  const navigate = useNavigate();
 
   useEffect(() => {
+    // Check authentication
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (!session) {
+        navigate("/auth");
+      } else {
+        setUser(session.user);
+      }
+    });
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (!session) {
+        navigate("/auth");
+      } else {
+        setUser(session.user);
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, [navigate]);
+
+  useEffect(() => {
+    if (!user) return;
+
     // Check for saved data in localStorage first
     const savedData = localStorage.getItem('gridcoData');
     const savedTimestamp = localStorage.getItem('gridcoLastUpdated');
@@ -37,7 +67,7 @@ const Index = () => {
     
     // Load initial data from public folder if no saved data
     loadInitialData();
-  }, []);
+  }, [user]);
 
   const loadInitialData = async () => {
     try {
@@ -113,7 +143,12 @@ const Index = () => {
 
   const kpis = data.length > 0 ? calculateKPIs(data) : null;
 
-  if (loading) {
+  const handleSignOut = async () => {
+    await supabase.auth.signOut();
+    navigate("/auth");
+  };
+
+  if (loading || adminLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-background to-secondary">
         <div className="text-center">
@@ -130,6 +165,8 @@ const Index = () => {
         lastUpdated={lastUpdated}
         onUpload={handleUpload}
         onExport={handleExport}
+        onSignOut={handleSignOut}
+        isAdmin={isAdmin}
       />
       
       <input

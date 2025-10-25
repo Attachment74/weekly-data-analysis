@@ -1,13 +1,15 @@
 import { Button } from "@/components/ui/button";
-import { Upload, Download, Calendar } from "lucide-react";
+import { Upload, Download, Calendar, LogOut } from "lucide-react";
 
 interface DashboardHeaderProps {
   lastUpdated: string;
   onUpload: () => void;
   onExport: () => void;
+  onSignOut: () => void;
+  isAdmin: boolean;
 }
 
-export const DashboardHeader = ({ lastUpdated, onUpload, onExport }: DashboardHeaderProps) => {
+export const DashboardHeader = ({ lastUpdated, onUpload, onExport, onSignOut, isAdmin }: DashboardHeaderProps) => {
   return (
     <header className="bg-gradient-to-r from-primary to-primary/90 text-primary-foreground py-6 px-8 shadow-lg">
       <div className="max-w-7xl mx-auto">
@@ -21,15 +23,17 @@ export const DashboardHeader = ({ lastUpdated, onUpload, onExport }: DashboardHe
           </div>
           
           <div className="flex gap-3">
-            <Button
-              variant="secondary"
-              size="sm"
-              onClick={onUpload}
-              className="gap-2"
-            >
-              <Upload className="w-4 h-4" />
-              Upload New Data
-            </Button>
+            {isAdmin && (
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={onUpload}
+                className="gap-2"
+              >
+                <Upload className="w-4 h-4" />
+                Upload New Data
+              </Button>
+            )}
             <Button
               variant="secondary"
               size="sm"
@@ -38,6 +42,15 @@ export const DashboardHeader = ({ lastUpdated, onUpload, onExport }: DashboardHe
             >
               <Download className="w-4 h-4" />
               Export Report
+            </Button>
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={onSignOut}
+              className="gap-2"
+            >
+              <LogOut className="w-4 h-4" />
+              Sign Out
             </Button>
           </div>
         </div>
