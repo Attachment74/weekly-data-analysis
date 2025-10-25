@@ -19,7 +19,23 @@ const Index = () => {
   const { toast } = useToast();
 
   useEffect(() => {
-    // Load initial data from public folder
+    // Check for saved data in localStorage first
+    const savedData = localStorage.getItem('gridcoData');
+    const savedTimestamp = localStorage.getItem('gridcoLastUpdated');
+    
+    if (savedData && savedTimestamp) {
+      try {
+        const parsedData = JSON.parse(savedData);
+        setData(parsedData);
+        setLastUpdated(savedTimestamp);
+        setLoading(false);
+        return;
+      } catch (error) {
+        console.error('Error loading saved data:', error);
+      }
+    }
+    
+    // Load initial data from public folder if no saved data
     loadInitialData();
   }, []);
 
@@ -60,8 +76,14 @@ const Index = () => {
     try {
       setLoading(true);
       const parsedData = await parseExcelFile(file);
+      const timestamp = new Date().toLocaleString();
+      
+      // Save to localStorage
+      localStorage.setItem('gridcoData', JSON.stringify(parsedData));
+      localStorage.setItem('gridcoLastUpdated', timestamp);
+      
       setData(parsedData);
-      setLastUpdated(new Date().toLocaleString());
+      setLastUpdated(timestamp);
       
       toast({
         title: "Data Updated Successfully",
