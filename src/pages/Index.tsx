@@ -9,6 +9,7 @@ import { TransmissionTab } from "@/components/tabs/TransmissionTab";
 import { FrequencyTab } from "@/components/tabs/FrequencyTab";
 import { RegionalTab } from "@/components/tabs/RegionalTab";
 import { parseExcelFile, calculateKPIs, WeeklyData } from "@/lib/excelParser";
+import { exportToPDF } from "@/lib/pdfExport";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
 
@@ -111,10 +112,29 @@ const Index = () => {
   };
 
   const handleExport = () => {
-    toast({
-      title: "Export Feature",
-      description: "Export functionality will be available soon.",
-    });
+    if (!kpis) {
+      toast({
+        title: "No Data Available",
+        description: "Please wait for data to load before exporting.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      exportToPDF(data, kpis);
+      toast({
+        title: "Report Exported",
+        description: "PDF report has been downloaded successfully.",
+      });
+    } catch (error) {
+      console.error('Error exporting PDF:', error);
+      toast({
+        title: "Export Failed",
+        description: "Failed to generate PDF report. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
   const kpis = data.length > 0 ? calculateKPIs(data) : null;
