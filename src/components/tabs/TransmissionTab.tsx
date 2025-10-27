@@ -8,6 +8,14 @@ interface TransmissionTabProps {
 }
 
 export const TransmissionTab = ({ data }: TransmissionTabProps) => {
+  if (!data || data.length === 0) {
+    return (
+      <div className="text-center py-12 text-muted-foreground">
+        No transmission data available
+      </div>
+    );
+  }
+
   const availabilityData = data.slice(-12).map(d => ({
     date: d.date.split(',')[0].replace(/\s+/g, ' ').trim(),
     '69kV': d.availability69KV,
