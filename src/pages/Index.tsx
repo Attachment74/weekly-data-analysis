@@ -12,6 +12,7 @@ import { parseExcelFile, calculateKPIs, WeeklyData } from "@/lib/excelParser";
 import { exportToPDF } from "@/lib/pdfExport";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 
 const Index = () => {
   const [data, setData] = useState<WeeklyData[]>([]);
@@ -22,35 +23,59 @@ const Index = () => {
   const { toast } = useToast();
 
   useEffect(() => {
-    // Check for saved data in localStorage first
-    const savedData = localStorage.getItem('gridcoData');
-    const savedTimestamp = localStorage.getItem('gridcoLastUpdated');
-    
-    if (savedData && savedTimestamp) {
-      try {
-        const parsedData = JSON.parse(savedData);
-        setData(parsedData);
-        setLastUpdated(savedTimestamp);
-        setLoading(false);
-        return;
-      } catch (error) {
-        console.error('Error loading saved data:', error);
-      }
-    }
-    
-    // Load initial data from public folder if no saved data
-    loadInitialData();
+    loadDataFromDatabase();
   }, []);
+
+  const loadDataFromDatabase = async () => {
+    try {
+      setLoading(true);
+      const { data: gridData, error } = await supabase
+        .from("weekly_grid_data")
+        .select("*")
+        .eq("is_current", true)
+        .maybeSingle();
+
+      if (error) throw error;
+
+      if (gridData) {
+        setData(gridData.data as unknown as WeeklyData[]);
+        setLastUpdated(new Date(gridData.uploaded_at).toLocaleString());
+      } else {
+        // No data in database, load initial data
+        await loadInitialData();
+      }
+    } catch (error) {
+      console.error("Error loading data from database:", error);
+      toast({
+        title: "Error Loading Data",
+        description: "Failed to load data. Loading initial dataset...",
+        variant: "destructive",
+      });
+      await loadInitialData();
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const loadInitialData = async () => {
     try {
-      setLoading(true);
       const response = await fetch('/data/GRIDCo_WEEKLY_New_08_-_2025.xlsx');
       const blob = await response.blob();
       const file = new File([blob], 'GRIDCo_WEEKLY_New_08_-_2025.xlsx');
       const parsedData = await parseExcelFile(file);
+      
+      // Save to database
+      const { error } = await supabase
+        .from("weekly_grid_data")
+        .insert({
+          data: parsedData as any,
+        });
+
+      if (error) throw error;
+
+      const timestamp = new Date().toLocaleString();
       setData(parsedData);
-      setLastUpdated(new Date().toLocaleString());
+      setLastUpdated(timestamp);
       
       toast({
         title: "Data Loaded Successfully",
@@ -63,8 +88,6 @@ const Index = () => {
         description: "Failed to load the initial dataset.",
         variant: "destructive",
       });
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -83,24 +106,29 @@ const Index = () => {
     try {
       setLoading(true);
       const parsedData = await parseExcelFile(file);
+      
+      // Save to database (trigger will automatically set as current)
+      const { error } = await supabase
+        .from("weekly_grid_data")
+        .insert({
+          data: parsedData as any,
+        });
+
+      if (error) throw error;
+
       const timestamp = new Date().toLocaleString();
-      
-      // Save to localStorage
-      localStorage.setItem('gridcoData', JSON.stringify(parsedData));
-      localStorage.setItem('gridcoLastUpdated', timestamp);
-      
       setData(parsedData);
       setLastUpdated(timestamp);
       
       toast({
         title: "Data Updated Successfully",
-        description: `${parsedData.length} weeks of data loaded from ${file.name}.`,
+        description: `${parsedData.length} weeks of data synced across all devices.`,
       });
     } catch (error) {
-      console.error('Error parsing file:', error);
+      console.error('Error uploading file:', error);
       toast({
-        title: "Error Parsing File",
-        description: "Please ensure the file format matches the expected structure.",
+        title: "Error Uploading File",
+        description: "Failed to save data to database. Please try again.",
         variant: "destructive",
       });
     } finally {
