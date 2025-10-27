@@ -35,6 +35,27 @@ export type Database = {
         }
         Relationships: []
       }
+      weekly_grid_data: {
+        Row: {
+          data: Json
+          id: string
+          is_current: boolean
+          uploaded_at: string
+        }
+        Insert: {
+          data: Json
+          id?: string
+          is_current?: boolean
+          uploaded_at?: string
+        }
+        Update: {
+          data?: Json
+          id?: string
+          is_current?: boolean
+          uploaded_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -47,6 +68,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      set_current_weekly_data: { Args: { data_id: string }; Returns: undefined }
     }
     Enums: {
       app_role: "admin" | "user"
